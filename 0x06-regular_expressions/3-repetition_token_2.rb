@@ -1,3 +1,3 @@
 #!/usr/bin/env ruby
-#Auth: Sangwani P Zyambo
+#A regular expression that is match
 puts ARGV[0].scan(/hbt+n/).join
