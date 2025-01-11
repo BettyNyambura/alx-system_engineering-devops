@@ -1,0 +1,11 @@
+#!/bin/env bash
+# Connects to a server using ssh with a private key and the user 'ubuntu'.
+
+# Ensure the script is run with a hostname or IP as an argument
+if [ "$#" -ne 1 ]; then
+  echo "Usage: $0 <hostname_or_ip>"
+  exit 1
+fi
+
+# Connect to the server
+ssh -i ~/.ssh/school ubuntu@"$1"
