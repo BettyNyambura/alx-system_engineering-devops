@@ -1,26 +1,31 @@
 #!/usr/bin/env bash
-# This script installs Nginx and configures it to serve a page containing 'Hello World!'
+# This script installs Nginx, configures it to listen on port 80, and serves "Hello World" at the root
 
-# Update and install nginx
+# Ensure the script is run as root
+if [[ $EUID -ne 0 ]]; then
+  echo "This script must be run as root" >&2
+  exit 1
+fi
+
+# Update package list and install Nginx
 apt-get update -y
-apt-get install -y nginx
+apt-get install nginx -y
 
-# Remove the default configuration if it exists
-rm -f /etc/nginx/sites-enabled/default
+# Set up a simple HTML page
+echo "Hello World!" > /var/www/html/index.html
 
-# Create a custom configuration file for Nginx
-echo 'server {
-    listen 80;
-    root /var/www/html;
-    index index.html;
-    
-    location / {
-        try_files $uri $uri/ =404;
-    }
-}' > /etc/nginx/sites-available/default
+# Nginx configuration to ensure it listens on port 80
+sed -i 's/^.*listen 80 default_server;/listen 80;/' /etc/nginx/sites-available/default
+sed -i 's/^.*server_name _;/server_name localhost;/' /etc/nginx/sites-available/default
 
-# Create the index.html file with the 'Hello World!' message
-echo 'Hello World!' > /var/www/html/index.html
+# Stop any running Nginx process and restart Nginx
+nginx -s stop || true
+nginx
 
-# Restart nginx without using systemctl (using service)
-service nginx restart
+# Verify if Nginx is running and listening on port 80
+if ss -tuln | grep -q ':80'; then
+  echo "Nginx is running and serving on port 80."
+else
+  echo "Failed to start Nginx." >&2
+  exit 1
+fi
