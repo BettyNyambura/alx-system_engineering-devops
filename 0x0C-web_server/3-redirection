@@ -11,27 +11,26 @@ fi
 apt-get update -y
 apt-get install nginx -y
 
-# Configure Nginx for redirection
-cat <<EOF > /etc/nginx/sites-available/default
-server {
-    listen 80 default_server;
-    listen [::]:80 default_server;
+# Set up a simple HTML page for testing
+echo "Hello World!" > /var/www/html/index.html
 
-    root /var/www/html;
-    index index.html;
+# Nginx configuration to ensure it listens on port 80
+sed -i 's/^.*listen 80 default_server;/listen 80;/' /etc/nginx/sites-available/default
+sed -i 's/^.*server_name _;/server_name localhost;/' /etc/nginx/sites-available/default
 
-    server_name _;
+# Add redirect rule for /redirect_me
+sed -i '/location \/ {/a \ \ \ \ location /redirect_me { \n\ \ \ \ \ \ \ \ return 301 https://www.example.com; \n\ \ \ }' /etc/nginx/sites-available/default
 
-    location /redirect_me {
-        return 301 https://www.youtube.com/watch?v=QH2-TGUlwu4;
-    }
-
-    location / {
-        try_files \$uri \$uri/ =404;
-    }
-}
-EOF
-
-# Restart Nginx to apply changes
+# Stop any running Nginx process
 nginx -s stop || true
+
+# Start Nginx
 nginx
+
+# Verify if Nginx is running and listening on port 80
+if ss -tuln | grep -q ':80'; then
+  echo "Nginx is running and serving on port 80."
+else
+  echo "Failed to start Nginx." >&2
+  exit 1
+fi
