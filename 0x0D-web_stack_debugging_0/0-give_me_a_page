@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Update package list and install Apache
 sudo apt update -y
 sudo apt install apache2 -y
