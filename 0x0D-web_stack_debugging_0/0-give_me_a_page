@@ -1,0 +1,25 @@
+# Update package list and install Apache
+sudo apt update -y
+sudo apt install apache2 -y
+
+# Set the ServerName to suppress warnings
+echo "ServerName localhost" | sudo tee -a /etc/apache2/apache2.conf
+
+# Create a simple index.html page
+echo "Hello ALX" | sudo tee /var/www/html/index.html
+sudo cat /var/www/html/index.html
+
+# Ensure Apache is listening on port 8080
+sudo sed -i 's/Listen 8080/Listen 8080/' /etc/apache2/ports.conf
+
+sudo lsof -i :8080
+
+# Restart Apache to apply changes
+sudo systemctl restart apache2
+
+# Check if Apache is running correctly
+sudo systemctl status apache2
+
+# Ensure Apache is enabled to start on boot
+sudo systemctl enable apache2
+curl 0:8080
