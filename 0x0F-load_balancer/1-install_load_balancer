@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# Set the STUDENT_ID variable, replace with your actual student ID
+STUDENT_ID="your_student_id"
+
+# Update package list and install HAproxy
+sudo apt update
+sudo apt install -y haproxy
+
+# Backup the original HAproxy configuration
+sudo cp /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg.bak
+
+# Configure HAproxy
+sudo bash -c 'cat > /etc/haproxy/haproxy.cfg <<EOL
+# Global settings
+global
+    log /dev/log    local0
+    log /dev/log    local1 notice
+    chroot /var/lib/haproxy
+    pidfile /var/run/haproxy.pid
+    maxconn 200
+    user haproxy
+    group haproxy
+    daemon
+
+# Default settings
+defaults
+    log     global
+    option  httplog
+    option  dontlognull
+    timeout connect 5000ms
+    timeout client  50000ms
+    timeout server  50000ms
+
+# Frontend configuration: listen on port 80
+frontend http_front
+    bind *:80
+    default_backend http_back
+
+# Backend configuration: round-robin load balancing between web-01 and web-02
+backend http_back
+    balance roundrobin
+    server web-01 ${STUDENT_ID}-web-01:80 check
+    server web-02 ${STUDENT_ID}-web-02:80 check
+
+EOL'
+
+# Enable HAproxy to start on boot
+sudo systemctl enable haproxy
+
+# Restart HAproxy to apply the changes
+sudo systemctl restart haproxy
+
+# Check HAproxy status to verify it is running correctly
+sudo systemctl status haproxy
+
+# Print the current HAproxy configuration
+cat /etc/haproxy/haproxy.cfg
