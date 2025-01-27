@@ -1,0 +1,5 @@
+Synchronizing state of nginx.service with SysV service script with /lib/systemd/systemd-sysv-install.
+Executing: /lib/systemd/systemd-sysv-install enable nginx
+System has not been booted with systemd as init system (PID 1). Can't operate.
+Failed to connect to bus: Host is down
+nginx: [emerg] unexpected end of file, expecting ";" or "}" in /etc/nginx/sites-enabled/1:2
