@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
-#configure nginx server to listen on port 80
+# Configure nginx server to listen on port 80
 
 # Enable and start Nginx
-sudo systemctl enable nginx
-sudo systemctl start nginx
+sudo service nginx start
 
 # Ensure Nginx listens on port 80 for IPv4 and IPv6
 sudo sed -i 's/listen [0-9]* default_server;/listen 80;/' /etc/nginx/sites-available/default
@@ -12,22 +11,7 @@ sudo sed -i 's/listen [::]:[0-9]* default_server;/listen [::]:80;/' /etc/nginx/s
 # Restart Nginx to apply changes
 # Start Nginx (if not running)
 if ! pgrep -x "nginx" > /dev/null; then
-    nginx
+    sudo nginx
 else
-    nginx -s reload
+    sudo nginx -s reload
 fi
-
-# Ensure the default HTML page exists
-echo '<!DOCTYPE html>
-<html>
-<head>
-<title>Welcome to nginx!</title>
-<style>
-    body { width: 35em; margin: 0 auto; font-family: Tahoma, Verdana, Arial, sans-serif; }
-</style>
-</head>
-<body>
-<h1>Welcome to nginx!</h1>
-<p>If you see this page, the nginx web server is successfully installed and working. Further configuration is required.</p>
-</body>
-</html>' > /usr/share/nginx/html/index.html
