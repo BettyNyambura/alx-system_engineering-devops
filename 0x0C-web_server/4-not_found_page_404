@@ -11,16 +11,19 @@ fi
 apt-get update -y
 apt-get install nginx -y
 
-# Create custom 404 page with required message
-echo "Ceci n'est pas une page" > /var/www/html/404.html
+# Set up a simple HTML page for testing
+echo "Hello World!" > /var/www/html/index.html
 
 # Nginx configuration to ensure it listens on port 80
 sed -i 's/^.*listen 80 default_server;/listen 80;/' /etc/nginx/sites-available/default
 sed -i 's/^.*server_name _;/server_name localhost;/' /etc/nginx/sites-available/default
 
+# Add redirect rule for /redirect_me
+sed -i '/location \/ {/a \ \ \ \ location /redirect_me {\n\ \ \ \ \ \ \ \ return 301 https://www.example.com;\n\ \ \ \ }' /etc/nginx/sites-available/default
+
 # Configure Nginx to use the custom 404 page
+sed -i '/server {/a \ \ \ \ location = /404.html {\n\ \ \ \ \ \ \ \ root /var/www/html;\n\ \ \ \ }' /etc/nginx/sites-available/default
 sed -i '/server {/a \ \ \ \ error_page 404 /404.html;' /etc/nginx/sites-available/default
-sed -i '/server {/a \ \ \ \ location = /404.html { \n\ \ \ \ \ \ \ \ root /var/www/html; \n\ \ \ \ \ }' /etc/nginx/sites-available/default
 
 # Stop any running Nginx process
 nginx -s stop || true
@@ -28,7 +31,7 @@ nginx -s stop || true
 # Start Nginx
 nginx
 
-# Verify if Nginx is running and serving on port 80
+# Verify if Nginx is running and listening on port 80
 if ss -tuln | grep -q ':80'; then
   echo "Nginx is running and serving on port 80."
 else
