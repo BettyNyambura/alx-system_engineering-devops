@@ -1,23 +1,62 @@
 #!/usr/bin/env bash
-# configures a new HAproxy as a load balancer
 
-# Install HAproxy on a server
-apt-get -y update
-apt-get -y install haproxy=1.6.\*
+# Ensure the script runs as root
+if [[ $EUID -ne 0 ]]; then
+  echo "This script must be run as root" >&2
+  exit 1
+fi
 
-# Configure haproxy configuration file to distribute requests using a roundrobin algorithm
-echo '
-frontend waiyego.tech
-        bind *:80
-        mode http
-        default_backend web_servers
+# Install HAProxy
+apt-get update -y
+apt-get install haproxy -y
+
+# Backup the original HAProxy config
+cp /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg.bak
+
+# Configure HAProxy for round-robin load balancing
+cat <<EOF > /etc/haproxy/haproxy.cfg
+global
+    log /dev/log local0
+    log /dev/log local1 notice
+    chroot /var/lib/haproxy
+    stats socket /run/haproxy/admin.sock mode 660 level admin
+    stats timeout 30s
+    user haproxy
+    group haproxy
+    daemon
+
+defaults
+    log global
+    mode http
+    option httplog
+    option dontlognull
+    timeout connect 5000ms
+    timeout client 50000ms
+    timeout server 50000ms
+
+frontend http_front
+    bind *:80
+    default_backend web_servers
 
 backend web_servers
-        balance roundrobin
-        mode http
-        server 806583-web-01 100.26.152.157:80
-        server 806583-web-02 52.86.102.6:80
-' >> /etc/haproxy/haproxy.cfg
+    balance roundrobin
+    server web-01 [WEB_01_IP]:80 check
+    server web-02 [WEB_02_IP]:80 check
 
-# Restart HAproxy service
-service haproxy restart
+EOF
+
+# Replace placeholders with actual IPs
+sed -i "s/\[WEB_01_IP\]/$(getent hosts 806583-web-01 | awk '{print $1}')/" /etc/haproxy/haproxy.cfg
+sed -i "s/\[WEB_02_IP\]/$(getent hosts 806583-web-02 | awk '{print $1}')/" /etc/haproxy/haproxy.cfg
+
+# Enable and restart HAProxy
+systemctl enable haproxy
+systemctl restart haproxy
+
+# Verify HAProxy is running
+if systemctl status haproxy | grep -q 'active (running)'; then
+  echo "HAProxy is running and configured."
+else
+  echo "Failed to start HAProxy." >&2
+  exit 1
+fi
