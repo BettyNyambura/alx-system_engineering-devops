@@ -4,4 +4,4 @@ sudo sed -i 's/^#*user .*;/user nginx;/' /etc/nginx/nginx.conf
 sudo sed -i 's/listen 80;/listen 8080;/' /etc/nginx/nginx.conf
 sudo sed -i 's/listen \[::\]:80;/listen \[::\]:8080;/' /etc/nginx/nginx.conf
 sudo chmod 644 /etc/nginx/nginx.conf
-sudo nginx service nginx restart
+sudo service nginx restart
